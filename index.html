@@ -6,11 +6,11 @@
 	
 	<body>
 		<input id="slider" type="range" min="1" max="100" step="1"></input><br />
-		<canvas id="canvas" width="500" height="500" style="border: 1px solid"></canvas>
+		<canvas id="canvas" width="800" height="500" style="border: 1px solid;"></canvas>
 
 		<script type="text/javascript">
 			var canvasDrawing = new CanvasDrawing("canvas", "slider");
-			var interval = setInterval("canvasDrawing.draw()", 30)
+			var interval = setInterval("canvasDrawing.draw()", 30);
 		</script>
 	</body>
 </html>
