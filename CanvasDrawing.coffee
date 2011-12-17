@@ -11,12 +11,9 @@ class MarkMaker
 		@maxX = maxX # The last drawable x-position
 		
 		@timePerPixel = @range.value*30*1000 # c is the time per pixel
-		# alert("nowX: #{@nowX}\nminX: #{@minX}\nnowT: @{@nowT}")
 		
 		@minT = -1 * ((@timePerPixel*(@nowX - @minX)) - @nowT)
 		@maxT = -1 * ((@timePerPixel*(@nowX - @maxX)) - @nowT)
-	
-		# alert("minT: #{@minT}\nnowT: #{@nowT}\nmaxT: #{@maxT}")
 		
 		
 	###
@@ -49,8 +46,7 @@ class MarkMaker
 		t = first(@minT)
 		loop
 			# loop escape 
-			if t > @maxT
-				break
+			break if t > @maxT
 		
 			# loop body
 			mark = 
@@ -78,7 +74,7 @@ class MarkMaker
 	testSettings: (first, nextIncrement, minDistance) ->
 		x = this.tToX(first(@minT))
 		x2 = this.tToX(nextIncrement(@minT))
-		(x-x2) >= minDistance
+		(x2-x) >= minDistance
 		
 		
 class window.CanvasDrawing
@@ -99,37 +95,40 @@ class window.CanvasDrawing
 			currentHour + msPerHour
 			
 		# parameters for day tickmarks
-		@firstDay = (minT) ->
-			msPerDay = 1000*60*60 * 24
-			Math.floor(minT / msPerDay) * msPerHour
+		@firstDay = (minT) =>
+			msPerHour = 1000*60*60
+			
+			t = minT
+			d = new Date(t)
+			while(d.getHours() is not 0)
+				t += msPerHour
+				d.setTime(t)
+			t
 			
 		@nextDay = (currentDay) ->
 			msPerDay = 1000*60*60 * 24
 			currentDay + msPerDay
 	
 		@classifier = (t) ->
+			msPerMinute = 1000*60
 			msPerHour = 1000*60*60
 			msPerDay = 1000*60*60 * 24
-			if t % msPerHour is 0
-				c = "hour"
-			c = "day" if t % msPerDay is 0
-			c = "week" if (new Date(t)).getDay() is 0 and t % msPerDay is 0
-			c = "month" if (new Date(t)).getDate() is 0 and t % msPerDay is 0
+			
+			d = new Date(t)
+			c = "hour" 	if t % msPerHour is 0
+			c = "day"   if d.getHours() is 0
+			c = "week" 	if d.getDay() is 0 and d.getHours() is 0 # t % msPerDay is 0
+			c = "month" if d.getDate() is 0 and d.getHours() is 0 # t % msPerDay is 0
+			c = "year" 	if d.getMonth() is 0 and d.getDate() is 0 and d.getHours() is 0 # t % msPerDay is 0
 			c
+		
 		
 	drawLine: ->
 		@context.moveTo( 0, @lineY )
 		@context.lineTo( @canvas.width, @lineY )
 		@context.closePath()
 		@context.stroke()
-		pos = 
-			start: 
-				x: 0
-				y: @lineY
-			end: 
-				x: @canvas.width
-				y: @lineY
-
+		true
 				
 	drawTick: (x, length) ->
 		@context.beginPath()
@@ -137,13 +136,7 @@ class window.CanvasDrawing
 		@context.lineTo( x, @lineY + length/2 )
 		@context.closePath()
 		@context.stroke()
-		pos = 
-			start:
-				x: x
-				y: @lineY - length/2
-			end:
-				x: x
-				y: @lineY + length/2
+		true
 	
 	classToTickmarkLength: (c) ->
 		len = 10 if c is "hour" 
@@ -151,6 +144,20 @@ class window.CanvasDrawing
 		len = 20 if c is "week"
 		len = 25 if c is "month"
 		len
+	
+	
+	labelTickmark: (mark) ->
+		@context.font = "10px sans-serif"
+		d = new Date(mark.t)
+		if mark.class is "hour"
+			hour = d.getHours()
+			text = hour.toString()
+		
+		if mark.class is "day" or mark.class is "week"
+			text = (d.getMonth() + 1).toString() + "/" + d.getDate().toString()
+		
+		@context.fillText(text, mark.x, @lineY + this.classToTickmarkLength(mark.class))
+
 	
 	draw: ->
 		@context.clearRect(0, 0, @canvas.width, @canvas.height)
@@ -160,13 +167,18 @@ class window.CanvasDrawing
 		border = 50
 		markMaker = new MarkMaker(@range, 100, now.getTime(), border, @canvas.width-border)
 		
-		# Draw hour tickmarks
-		marks = markMaker.makeMarks( @firstHour, @nextHour, @classifier )
-		
+		# check whether to generate hour or day tickmarks
+		if markMaker.testSettings( @firstHour, @nextHour, 10 )
+			# then generate appropriate tickmarks
+			marks = markMaker.makeMarks( @firstHour, @nextHour, @classifier )
+		else
+			marks = markMaker.makeMarks( @firstDay, @nextDay, @classifier ) 
+	
+		$("#output").text( "marks.length: " + marks.length +  "  tToX(t): " + markMaker.tToX(marks[1].t) + "  marks[1].x: " + marks[1].x )			
 		i = 0
-		loop
-			break if i>=marks.length
-			this.drawTick(marks[i].x, this.classToTickmarkLength(marks[i].class))
+		while i < marks.length
+			this.drawTick(Math.floor(marks[i].x), this.classToTickmarkLength(marks[i].class))
+			this.labelTickmark(marks[i])
 			i++
 		true
 
