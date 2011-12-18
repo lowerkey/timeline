@@ -1,0 +1,14 @@
+#slider{
+	position: absolute;
+	left: 10px;
+	top: 10px;
+	z-index: 100;
+}
+
+#canvas{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	z-index: 50;
+}
+

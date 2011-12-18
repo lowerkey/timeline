@@ -44,11 +44,7 @@ class MarkMaker
 		results = new Array()
 		
 		t = first(@minT)
-		loop
-			# loop escape 
-			break if t > @maxT
-		
-			# loop body
+		while t<=@maxT
 			mark = 
 				t: t
 				x: this.tToX(t)
@@ -86,28 +82,30 @@ class window.CanvasDrawing
 		@lineY = 5/8 * @canvas.height
 		
 		# parameters for hour tickmarks
-		@firstHour = (minT) ->
+		@firstHour = (r) ->
 			msPerHour = 1000*60*60
-			Math.floor(minT / msPerHour) * msPerHour
+			Math.floor(r / msPerHour) * msPerHour
 			
 		@nextHour = (currentHour) ->
 			msPerHour = 1000*60*60
 			currentHour + msPerHour
 			
 		# parameters for day tickmarks
-		@firstDay = (minT) =>
+		@firstDay = (minT) ->
 			msPerHour = 1000*60*60
 			
-			t = minT
+			t = Math.floor(minT/msPerHour) * msPerHour
 			d = new Date(t)
-			while(d.getHours() is not 0)
+			while(d.getHours() isnt 0)
 				t += msPerHour
 				d.setTime(t)
 			t
 			
+			
 		@nextDay = (currentDay) ->
 			msPerDay = 1000*60*60 * 24
-			currentDay + msPerDay
+			t = currentDay + msPerDay
+	
 	
 		@classifier = (t) ->
 			msPerMinute = 1000*60
@@ -116,11 +114,14 @@ class window.CanvasDrawing
 			
 			d = new Date(t)
 			c = "hour" 	if t % msPerHour is 0
-			c = "day"   if d.getHours() is 0
-			c = "week" 	if d.getDay() is 0 and d.getHours() is 0 # t % msPerDay is 0
-			c = "month" if d.getDate() is 0 and d.getHours() is 0 # t % msPerDay is 0
-			c = "year" 	if d.getMonth() is 0 and d.getDate() is 0 and d.getHours() is 0 # t % msPerDay is 0
+			c = "day"	if d.getHours() is 0
+			c = "week"	if d.getDay() is 0 and d.getHours() is 0 	
+			c = "month"	if d.getDate() is 0 and d.getHours() is 0
+			c = "year"	if d.getMonth() is 0 and d.getDate() is 0 and d.getHours() is 0 	
 			c
+			
+		this.fitToWindow()
+		$(window).resize(this.fitToWindow)
 		
 		
 	drawLine: ->
@@ -173,17 +174,17 @@ class window.CanvasDrawing
 			marks = markMaker.makeMarks( @firstHour, @nextHour, @classifier )
 		else
 			marks = markMaker.makeMarks( @firstDay, @nextDay, @classifier ) 
-	
-		$("#output").text( "marks.length: " + marks.length +  "  tToX(t): " + markMaker.tToX(marks[1].t) + "  marks[1].x: " + marks[1].x )			
+		
 		i = 0
 		while i < marks.length
 			this.drawTick(Math.floor(marks[i].x), this.classToTickmarkLength(marks[i].class))
 			this.labelTickmark(marks[i])
 			i++
 		true
-
-	test: ->
-		now = new Date()
-		border = 50
-		markMaker = new MarkMaker(@range, 100, now.getTime(), border, @canvas.width-border)
-		alert(markMaker.rangeTtoRangeX(1000*60*60))
+		
+		
+	fitToWindow: ->
+		@canvas.height = $(window).height()
+		@canvas.width = $(window).width()
+		@lineY = 5/8 * @canvas.height
+		true
