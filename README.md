@@ -18,3 +18,7 @@
 ### Compilation
 
 `coffee -c -b CanvasDrawing.coffee`
+
+### Snapshot Demo
+Best viewed in Google Chrome because of the HTML5 Slider element.
+For your consideration: http://lowerkey.github.com/timeline/
