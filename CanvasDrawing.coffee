@@ -6,13 +6,13 @@
 
 # MarkMaker is responsible for producing x positions for markers
 class MarkMaker
-	constructor: (range, nowX, nowT, minX, maxX) ->
-		@range = range # The input type=range element
-		@nowX = nowX # The x-position of the now-marker
-		@nowT = nowT # The current time, designated by the now-marker
+	constructor: (@range, @nowX, @nowT, @minX, @maxX) ->
+		# range # The input type=range element
+		# nowX # The x-position of the now-marker
+		# nowT # The current time, designated by the now-marker
 		
-		@minX = minX # The first drawable x-position
-		@maxX = maxX # The last drawable x-position
+		# minX # The first drawable x-position
+		# maxX # The last drawable x-position
 		
 		@timePerPixel = this.scale(this.prescale(@range.value)) # c is the time per pixel
 		
